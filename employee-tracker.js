@@ -227,7 +227,7 @@ async function addEmployee(){
     });
 }
 
-async function removeEmployee() {
+function removeEmployee() {
 
   connection.query(queryEmployees, (err, res)=>{
     if(err) throw err;
@@ -251,10 +251,8 @@ async function removeEmployee() {
           main();
         });
 
-      })
-  })
-
-
+      });
+  });
 }
 
 async function updateRole(){}
@@ -272,7 +270,46 @@ function allRoles(){
 }
 
 async function addRole(){
+  const newRole = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'title',
+      message: 'what is the tile of the new role?'
+    },
+    {
+      type: 'input',
+      name: 'salary',
+      message: 'What is the salary of the new role?'
+    },
+  ]) 
 
+  connection.query(queryDepartment, (err, res)=>{
+    inquirer
+      .prompt([
+        {
+          type: 'list',
+          name: 'dept_id',
+          message: 'Choose a department for the new role.',
+          choices (){
+            const list = JSON.parse(JSON.stringify(res));
+            return list;
+          }
+        }
+      ])
+      .then(answer =>{
+        const query = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?);`;
+        connection.query(
+          query,
+          [newRole.title, parseInt(newRole.salary), answer.dept_id],
+          (err, res)=>{
+            if (err) throw err;
+            console.log(res.insterId);
+            main();
+          }
+        )
+      })
+  });
+ 
 }
 
 async function removeRole(){}
