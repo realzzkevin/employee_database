@@ -228,7 +228,6 @@ async function addEmployee(){
 }
 
 function removeEmployee() {
-
   connection.query(queryEmployees, (err, res)=>{
     if(err) throw err;
     inquirer
@@ -307,12 +306,36 @@ async function addRole(){
             main();
           }
         )
-      })
-  });
- 
+      });
+  }); 
 }
 
-async function removeRole(){}
+function removeRole(){
+  connection.query(queryRoles, (err, res)=>{
+    if(err) throw err;
+    inquirer
+      .prompt([
+        {
+          type: 'list',
+          name: 'id',
+          message: 'Choose a role to delete.',
+          choices(){
+            const list = JSON.parse(JSON.stringify(res));
+            return list;
+          }  
+        }
+      ])
+      .then(answer =>{
+        const query = `DELETE FROM role WHERE id = ?;`;
+        connection.query(query, answer.id, (err, res)=>{
+          if(err) throw err;
+          console.log(`Role ${answer.id} deleted.`);
+          main();
+        });
+
+      });
+  });
+}
 
 function allDept(){
   connection.query(queryDepartment, (err, res)=>{
@@ -324,10 +347,52 @@ function allDept(){
 }
 
 async function addDept(){
+  const newDept = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'name',
+      message: 'What is the name of the new department?'
+    },
+  ]); 
 
+  const query = `INSERT INTO department (name) VALUES (?);`;
+  connection.query(query, newDept.name,  (err, res)=>{
+    if (err) throw err;
+    console.log(`Department ${newDept.name} created`);
+    main();
+  });
 }
 
-async function removeDept(){}
+function removeDept(){
+  connection.query(queryDepartment, (err, res)=>{
+    if(err) throw err;
+    inquirer
+      .prompt([
+        {
+          type: 'list',
+          name: 'id',
+          message: 'Choose a department to delete.',
+          choices(){
+            const list = JSON.parse(JSON.stringify(res));
+            return list;
+          }  
+        }
+      ])
+      .then(answer =>{
+        const query = `DELETE FROM department WHERE id = ?;`;
+        connection.query(query, answer.id, (err, res)=>{
+          if(err) throw err;
+          console.log(`Department ${answer[0]} deleted.`);
+          main();
+        });
+
+      });
+  });
+}
+
+function budgetByDept() {
+  
+}
 
 async function main() {
   const answer = await inquirer.prompt({
