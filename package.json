@@ -1,0 +1,27 @@
+{
+  "name": "employee_database",
+  "version": "1.0.0",
+  "description": "Command-line Content Management System for managing employees.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node employee-tracker.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/realzzkevin/employee_database.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/realzzkevin/employee_database/issues"
+  },
+  "homepage": "https://github.com/realzzkevin/employee_database#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "dotenv": "^9.0.2",
+    "inquirer": "^8.0.0",
+    "mysql": "^2.18.1"
+  }
+}
