@@ -391,7 +391,37 @@ function removeDept(){
 }
 
 function budgetByDept() {
-  
+  connection.query(queryDepartment, (err, res)=>{
+    if(err) throw err;
+    inquirer
+      .prompt([
+        {
+          type: 'list',
+          name: 'id',
+          message: "View the budget of which department?",
+          choices(){
+            const list = JSON.parse(JSON.stringify(res));
+            return list;
+          }  
+        }
+      ])
+      .then(answer =>{
+        const query = 
+        `SELECT CONCAT(department.name) AS Department, SUM(role.salary) AS Budget,
+        FROM employee 
+        LEFT JOIN role ON employee.role_id = role.id
+        LEFT JOIN department ON role.department_id = department.id
+        WHERE department_id = ?;`;
+
+        connection.query(query, answer.id, (err, res)=>{
+          if(err) throw err;
+          const table =cTable.getTable(res);            
+          console.log('\n'+table+'\n');
+          main();
+        });
+
+      });
+  });
 }
 
 async function main() {
@@ -460,7 +490,7 @@ async function main() {
       removeDept();
       break;
     case "View Total Utilized Budget By Department":
-      totalBudget();        
+      budgetByDept();        
       break;
     case "Exit":
       process.exit();
