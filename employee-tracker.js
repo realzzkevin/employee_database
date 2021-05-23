@@ -11,14 +11,9 @@ const connection = mysql.createConnection({
     database: process.env.DB_NAME,
 });
 
-async function byDepartment() {
-
+function byDepartment() {
   connection.query('SELECT * FROM department ORDER BY id', (err, res)=>{
     if (err) throw err;
-    console.log(res[0]);
-    const List = JSON.parse(JSON.stringify(res));
-    console.log(List);
-
     inquirer
       .prompt([
       {
@@ -52,16 +47,15 @@ async function byDepartment() {
 
           connection.query(query, [answer.dept], (err, res) =>{
             if(err) throw err;
-            const table =cTable.getTable(res);
-            
+            const table =cTable.getTable(res);            
             console.log('\n'+table);
           });
 
           main();
       })
   });
-
 }
+
 function viewAllEmplyees (){
   const query = `SELECT e.id, e.first_name, e.last_name, concat(department.name) as department, role.title, role.salary, CONCAT(m.first_name,' ', m.last_name) AS Manager FROM employee e INNER JOIN role ON e.role_id = role.id INNER JOIN department ON role.department_id = department.id left JOIN employee m ON e.manager_id = m.id order by e.id;`;
   connection.query(query, (err, res) =>{
@@ -73,25 +67,68 @@ function viewAllEmplyees (){
     console.log(table);
     console.log('\n');
   });
-
   main();
 }
 
-async function byManager(){
+function byManager(){
+  const managerQuery = 
+  `SELECT 
+    CONCAT(id) AS value,
+    CONCAT(first_name, ' ', last_name) AS name
+  FROM
+    employee
+  where manager_id IS NULL`;
+  
+  connection.query(managerQuery, (err, res) => {
+    if (err) throw err;
+    
+    inquirer
+      .prompt({
+        type: 'list',
+        name: 'manager',
+        messager: 'Which manager?',
+        choices(){
+          const mList = JSON.parse(JSON.stringify(res));
+          return mList;
+        }
+      })
+      .then(answer =>{
+        console.log(answer.manager);
+        const query = 
+          `SELECT 
+              e.id,
+              e.first_name,
+              e.last_name,
+              CONCAT(department.name) AS department,
+              role.title,
+              role.salary,
+              CONCAT(m.first_name, ' ', m.last_name) AS Manager
+          FROM
+              employee e
+                  INNER JOIN
+              role ON e.role_id = role.id
+                  INNER JOIN
+              department ON role.department_id = department.id
+                  LEFT JOIN
+              employee m ON e.manager_id = m.id
+          WHERE
+              e.manager_id = ?
+          ORDER BY 
+            e.id;`;
 
-  async connection.query
-
-  const answer = await inquirer.prompt({
-    type: 'list',
-    name: 'manager',
-    messager: 'Which manager?',
-    choices: []
+        connection.query(query, [answer.manager], (err, res) =>{
+          if (err) throw err;
+          const table =cTable.getTable(res);            
+          console.log('\n'+table+'\n');
+        })
+        main();        
+      });
   });
 }
 
 async function addEmployee(){
   const answer = await inquirer.prompt({
-    type: 'text'
+    type: 'input'
   })
 }
 
