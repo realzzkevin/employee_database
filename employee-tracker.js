@@ -21,7 +21,7 @@ FROM
 const queryEmployees = 
 `SELECT 
   CONCAT(id) AS value,
-  COCNAT(first_name, ' ', last_name) AS name
+  CONCAT(first_name, ' ', last_name) AS name
 FROM
   employee;`;
 
@@ -225,23 +225,34 @@ async function addEmployee(){
          });
       });
     });
-  //main();
 }
 
 async function removeEmployee() {
 
-  const answer = await inquirer.prompt([
-    {
-      type: 'list',
-      name: 'employee',
-      message: 'Delete which employee?',
-      choices(){
-        const list = getEmployees();
-        return list;
-      }
+  connection.query(queryEmployees, (err, res)=>{
+    if(err) throw err;
+    inquirer
+      .prompt([
+        {
+          type: 'list',
+          name: 'id',
+          message: 'Delete which employee?',
+          choices(){
+            const list = JSON.parse(JSON.stringify(res));
+            return list;
+          }  
+        }
+      ])
+      .then(answer =>{
+        const query = `DELETE FROM employee WHERE id = ?;`;
+        connection.query(query, answer.id, (err, res)=>{
+          if(err) throw err;
+          console.log('Employee deleted.');
+          main();
+        });
 
-    }
-  ])
+      })
+  })
 
 
 }
