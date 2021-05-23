@@ -118,12 +118,13 @@ async function start() {
         
       break;
     case "Exit":
-      return;          
+      process.exit();
+      
     default:
       start();
       break;
   }
-    
+    process.exit();
 }
 connection.connect(function(err) {
     if (err) {
