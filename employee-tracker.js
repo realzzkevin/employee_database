@@ -11,6 +11,38 @@ const connection = mysql.createConnection({
     database: process.env.DB_NAME,
 });
 
+const queryRoles =
+`SELECT 
+  CONCAT(id) AS value,
+  CONCAT(title, ': salary: ', salary) AS name
+FROM
+  role;`;
+
+const queryEmployees = 
+`SELECT 
+  CONCAT(id) AS value,
+  COCNAT(first_name, ' ', last_name) AS name
+FROM
+  employee;`;
+
+const queryDepartment = 
+`SELECT 
+CONCAT(id) AS value,
+name
+FROM
+department
+ORDER BY id;`;
+
+const queryManager = 
+`SELECT DISTINCT
+CONCAT(m.id) AS value,
+CONCAT(m.first_name, ' ', m.last_name) AS name
+FROM
+employee m
+    INNER JOIN
+employee e ON m.id = e.manager_id
+ORDER BY m.id;`;
+
 function byDepartment() {
   connection.query('SELECT * FROM department ORDER BY id', (err, res)=>{
     if (err) throw err;
@@ -120,19 +152,97 @@ function byManager(){
           if (err) throw err;
           const table =cTable.getTable(res);            
           console.log('\n'+table+'\n');
-        })
-        main();        
+        });
       });
   });
+  main();
 }
 
 async function addEmployee(){
-  const answer = await inquirer.prompt({
-    type: 'input'
-  })
+
+  let newEmployee = [null, null, null, null];
+  
+  const eName = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'first_name',
+      message: 'Enter employee first name.'
+    },
+    {
+      type: 'input',
+      name: 'last_name',
+      message: 'Enter last name',
+    },
+  ]);
+  console.log(eName);
+  newEmployee[0] = eName.first_name;
+  newEmployee[1] = eName.last_name;
+
+  connection.query(queryRoles, (err, res)=>{
+    if (err) throw err;
+    inquirer
+      .prompt([
+        {
+          type: 'list',
+          name: 'role',
+          message: 'choose a role for this employee.',
+          choices(){
+            const mList = JSON.parse(JSON.stringify(res));
+            return mList;
+          }
+        }
+      ])
+      .then(answer =>{
+        console.log(answer);
+         newEmployee[2] = answer.role;
+
+         connection.query(queryManager, (err, result) =>{
+           inquirer
+            .prompt([
+              {
+                type: 'list',
+                name: 'manager',
+                message: 'choose a manager for this employee.',
+                choices () {
+                  const list = JSON.parse(JSON.stringify(result));
+                  return list;
+                }
+              }
+            ])
+            .then (ans =>{
+              console.log(ans);
+              newEmployee[3] = ans.manager;
+              console.log(newEmployee);
+              const query = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
+              VALUES (?, ?, ?, ?);`
+              connection.query(query, newEmployee, (err, res)=>{
+                if (err) throw err;
+                console.log('New employee added');
+                main();
+              });
+              main();
+            });
+         });
+      });
+    });
+  //main();
 }
 
 async function removeEmployee() {
+
+  const answer = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'employee',
+      message: 'Delete which employee?',
+      choices(){
+        const list = getEmployees();
+        return list;
+      }
+
+    }
+  ])
+
 
 }
 
@@ -140,15 +250,34 @@ async function updateRole(){}
 
 async function updateManager(){}
 
-async function allRoles(){}
+function allRoles(){
+    connection.query(queryRoles, (err, res)=>{
+      if (err) throw err;
+      const table =cTable.getTable(res);            
+      console.log('\n'+table+'\n');
+    });
 
-async function addRole(){}
+  return main();
+}
+
+async function addRole(){
+
+}
 
 async function removeRole(){}
 
-async function allDept(){}
+function allDept(){
+  connection.query(queryDepartment, (err, res)=>{
+    if (err) throw err;
+    const table =cTable.getTable(res);            
+    console.log('\n'+table+'\n');
+  });
+  return main();
+}
 
-async function addDept(){}
+async function addDept(){
+
+}
 
 async function removeDept(){}
 
@@ -175,8 +304,6 @@ async function main() {
       "Exit"
     ]
   });
-
-  //console.log(answer);
   
   switch (answer.options) {
     case "View All Employees":
