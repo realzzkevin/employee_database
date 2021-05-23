@@ -1,5 +1,6 @@
 const mysql = require('mysql');
 const inquirer = require('inquirer');
+const cTable = require('console.table');
 require('dotenv').config();
 
 const connection = mysql.createConnection({
@@ -11,14 +12,30 @@ const connection = mysql.createConnection({
 });
 
 async function byDepartment() {
+  var deptList;
+  connection.query('SELECT * FROM department ORDER BY id', (err, res)=>{
+    deptList = res;
+  });
   const answer = await inquirer.prompt({
     type: 'list',
     name: 'dept',
     message: 'Which department?',
-    choices: [
-
-    ]
+    choices: deptList
   });
+}
+function viewAllEmplyees (){
+  const query = `SELECT e.id, e.first_name, e.last_name, concat(department.name) as department, role.title, role.salary, CONCAT(m.first_name,' ', m.last_name) AS Manager FROM employee e INNER JOIN role ON e.role_id = role.id INNER JOIN department ON role.department_id = department.id left JOIN employee m ON e.manager_id = m.id order by e.id;`;
+  connection.query(query, (err, res) =>{
+    if(err){
+      console.error('something wrong');
+    }
+    console.log('\n');
+    const table = cTable.getTable(res);
+    console.log(table);
+    console.log('\n');
+  })
+
+  main();
 }
 
 async function byManager(){
@@ -53,7 +70,7 @@ async function addDept(){}
 
 async function romoveDept(){}
 
-async function start() {
+async function main() {
   const answer = await inquirer.prompt({
     type : 'list',
     name: 'options',
@@ -77,11 +94,11 @@ async function start() {
     ]
   });
 
-  console.log(answer);
+  //console.log(answer);
   
   switch (answer.options) {
     case "View All Employees":
-      
+      viewAllEmplyees();
       break;
     case "View All Employees By Department":
       
@@ -119,13 +136,13 @@ async function start() {
       break;
     case "Exit":
       process.exit();
-      
+
     default:
       start();
       break;
   }
-    process.exit();
 }
+
 connection.connect(function(err) {
     if (err) {
       console.error('error connecting: ' + err.stack);
@@ -134,6 +151,6 @@ connection.connect(function(err) {
    
     console.log('connected as id ' + connection.threadId);
 
-    start();
+    main();
 
 });
