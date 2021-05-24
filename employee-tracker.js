@@ -89,7 +89,9 @@ function byDepartment() {
 }
 
 function viewAllEmplyees (){
-  const query = `SELECT e.id, e.first_name, e.last_name, concat(department.name) as department, role.title, role.salary, CONCAT(m.first_name,' ', m.last_name) AS Manager FROM employee e INNER JOIN role ON e.role_id = role.id INNER JOIN department ON role.department_id = department.id left JOIN employee m ON e.manager_id = m.id order by e.id;`;
+  const query = 
+    `SELECT e.id, e.first_name, e.last_name, concat(department.name) as department, role.title, role.salary, CONCAT(m.first_name,' ', m.last_name) AS Manager
+     FROM employee e INNER JOIN role ON e.role_id = role.id INNER JOIN department ON role.department_id = department.id left JOIN employee m ON e.manager_id = m.id order by e.id;`;
   connection.query(query, (err, res) =>{
     if(err) throw err;
     const table = cTable.getTable(res);
@@ -170,7 +172,6 @@ async function addEmployee(){
       message: 'Enter last name',
     },
   ]);
-  console.log(eName);
   newEmployee[0] = eName.first_name;
   newEmployee[1] = eName.last_name;
 
@@ -189,9 +190,7 @@ async function addEmployee(){
         }
       ])
       .then(answer =>{
-        console.log(answer);
          newEmployee[2] = answer.role;
-
          connection.query(queryManager, (err, result) =>{
            inquirer
             .prompt([
@@ -206,7 +205,6 @@ async function addEmployee(){
               }
             ])
             .then (ans =>{
-              console.log(ans);
               newEmployee[3] = ans.manager;
               console.log(newEmployee);
               const query = `INSERT INTO employee (first_name, last_name, role_id, manager_id)
@@ -516,7 +514,7 @@ function budgetByDept() {
       ])
       .then(answer =>{
         const query = 
-        `SELECT CONCAT(department.name) AS Department, SUM(role.salary) AS Budget,
+        `SELECT CONCAT(department.name) AS Department, SUM(role.salary) AS Budget
         FROM employee 
         LEFT JOIN role ON employee.role_id = role.id
         LEFT JOIN department ON role.department_id = department.id
@@ -538,6 +536,7 @@ async function main() {
     type : 'list',
     name: 'options',
     message: 'What would you like to do?',
+    loop: false,
     choices: [
       "View All Employees",
       "View All Employees By Department",
@@ -561,30 +560,39 @@ async function main() {
     case "View All Employees":
       viewAllEmplyees();
       break;
+
     case "View All Employees By Department":
       byDepartment();
       break;
+
     case "View All Employees By Manager":
       byManager();
       break;
+
     case "Add Employee":
       addEmployee();
       break;
+
     case "Remove Employee":
       removeEmployee();
       break;
+
     case "Update Employee Role":
       updateRole()
       break;
+
     case "Update Employee Manager":
       updateManager();
       break;
+
     case "View All Roles":
       allRoles();
       break;
+
     case "Add Role":
       addRole()
       break;
+
     case "Remove Role":
       removeRole();
       break;
@@ -592,15 +600,19 @@ async function main() {
     case "View All Departments":
       allDept();
       break;
+
     case "Add Departments":
       addDept();
       break;
+
     case "Remove Depoartments":
       removeDept();
       break;
+
     case "View Total Utilized Budget By Department":
       budgetByDept();        
       break;
+
     case "Exit":
       process.exit();
 
@@ -614,10 +626,7 @@ connection.connect(function(err) {
     if (err) {
       console.error('error connecting: ' + err.stack);
       return;
-    }
-   
+    }   
     console.log('connected as id ' + connection.threadId);
-
     main();
-
 });
