@@ -91,13 +91,9 @@ function byDepartment() {
 function viewAllEmplyees (){
   const query = `SELECT e.id, e.first_name, e.last_name, concat(department.name) as department, role.title, role.salary, CONCAT(m.first_name,' ', m.last_name) AS Manager FROM employee e INNER JOIN role ON e.role_id = role.id INNER JOIN department ON role.department_id = department.id left JOIN employee m ON e.manager_id = m.id order by e.id;`;
   connection.query(query, (err, res) =>{
-    if(err){
-      console.error('something wrong');
-    }
-    console.log('\n');
+    if(err) throw err;
     const table = cTable.getTable(res);
-    console.log(table);
-    console.log('\n');
+    console.log('\n'+table+'\n');
   });
   main();
 }
@@ -254,9 +250,122 @@ function removeEmployee() {
   });
 }
 
-async function updateRole(){}
+function updateRole(){
+  connection.query(queryEmployees, (err, res)=>{
+    if(err) throw err;
+    inquirer
+      .prompt([
+        {
+          type: 'list',
+          name: 'e_id',
+          message: 'Update role for which employee?',
+          choices(){
+            const list = JSON.parse(JSON.stringify(res));
+            return list;
+          }  
+        }
+      ])
+      .then(answer =>{
+        const temp =[];
+        temp.push(answer.e_id);
+        connection.query(queryRoles, (err, result)=>{
+          if(err) throw err;
+          inquirer
+            .prompt([
+              {
+                type: 'list',
+                name: 'r_id',
+                message: 'Select a new role for the employee.',
+                choices(){
+                  const list = JSON.parse(JSON.stringify(result));
+                  return list;
+                }
+              }
+            ])
+            .then(ans => {
+              temp.push(ans.r_id);
+              const query = `UPDATE employee SET role_id = ? WHERE id = ?;`;
+              connection.query(query, [temp[1],temp[0]], (err, res)=>{
+                if (err) throw err;
+                connection.query(
+                  `SELECT employee.first_name, employee.last_name, role.title FROM employee
+                  LEFT JOIN role ON employee.role_id = role.id
+                  WHERE id =?`,
+                  temp[0],
+                  (err, resu) =>{
+                    const table =cTable.getTable(resu);            
+                    console.log('\n'+table+'\n'); 
+                    main();               
+                });
 
-async function updateManager(){}
+              });
+            });
+        });
+      });
+  });
+}
+
+function updateManager(){
+    connection.query(queryEmployees, (err, res)=>{
+      if(err) throw err;
+      inquirer
+        .prompt([
+          {
+            type: 'list',
+            name: 'e_id',
+            message: 'Update manager for which employee?',
+            choices(){
+              const list = JSON.parse(JSON.stringify(res));
+              return list;
+            }  
+          }
+        ])
+        .then(answer =>{
+          const temp =[];
+          temp.push(answer.e_id);
+          connection.query(queryManager, (err, result)=>{
+            if(err) throw err;
+            inquirer
+              .prompt([
+                {
+                  type: 'list',
+                  name: 'm_id',
+                  message: 'Select a manager for the employee.',
+                  choices(){
+                    const list = JSON.parse(JSON.stringify(result));
+                    return list;
+                  }
+                }
+              ])
+              .then(ans => {
+                temp.push(ans.m_id);
+                const query = `UPDATE employee SET manager_id = ? WHERE id = ?;`;
+                connection.query(query, [temp[1],temp[0]], (err, res)=>{
+                  if (err) throw err;
+                  const query2 = 
+                    `SELECT 
+                      e.first_name,
+                      e.last_name,
+                      CONCAT(m.first_name, ' ', m.last_name) AS manager
+                    FROM
+                      employee e
+                        LEFT JOIN
+                      employee m ON e.manager_id = m.id
+                    WHERE
+                      e.id = ?;`;
+
+                  connection.query(query2, temp[0],(err, resu) =>{
+                      const table =cTable.getTable(resu);            
+                      console.log('\n'+table+'\n');
+                      main();               
+                  });
+  
+                });
+            });
+          });
+        });
+    });
+}
 
 function allRoles(){
     connection.query(queryRoles, (err, res)=>{
